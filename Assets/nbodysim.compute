@@ -1,0 +1,72 @@
+﻿#pragma kernel CSMain
+#pragma kernel Integrate
+
+
+#define EPS2 0.01
+#define BLOCKDIM 512
+
+RWStructuredBuffer<float4> PositionsMass;
+RWStructuredBuffer<float4> Velocities;
+RWStructuredBuffer<float4> Accelerations;
+uint BodyCount;
+float DeltaTime;
+float G;
+
+groupshared float4 shPos[BLOCKDIM];
+float3 BodyBodyInteraction(float4 bi, float4 bj, float3 ai) // 20Flops total
+{
+    float3 r = bj.xyz - bi.xyz; // 3Flops
+    float distSqr = dot(r, r) + EPS2; // 6Flops
+    float invDist = rsqrt(distSqr); // 1Flop
+    float invDist3 = invDist * invDist * invDist; // 2Flops
+    float s = G * bj.w * invDist3; // 2Flops
+    return ai + r * s; // 6Flops
+}
+
+
+[numthreads(BLOCKDIM, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x;
+
+    float4 myPosMass = PositionsMass[index];
+    float3 acc = float3(0, 0, 0);
+    uint tileCount = (BodyCount + BLOCKDIM - 1) / BLOCKDIM;
+    uint tid = index % BLOCKDIM;
+
+    for (uint tile = 0; tile < tileCount; tile++)
+    {
+        uint idx = tile * BLOCKDIM + tid;
+        shPos[tid] = PositionsMass[idx];
+
+        GroupMemoryBarrierWithGroupSync();
+
+        for (uint i = 0; i < BLOCKDIM; i++)
+        {
+            float4 other = shPos[i];
+            acc = BodyBodyInteraction(myPosMass, other, acc);
+        }
+
+        GroupMemoryBarrierWithGroupSync();
+    }
+
+    Accelerations[index] = float4(acc, 0);
+}
+
+[numthreads(BLOCKDIM, 1, 1)]
+void Integrate(uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x;
+
+    float4 posMass = PositionsMass[index];
+    float4 vel = Velocities[index];
+    float3 acc = Accelerations[index].xyz;
+
+    vel.xyz += acc * DeltaTime;
+    posMass.xyz += vel.xyz * DeltaTime;
+
+    Velocities[index] = vel;
+    PositionsMass[index] = posMass;
+}
+
+
