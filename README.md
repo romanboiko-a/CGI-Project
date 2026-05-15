@@ -16,3 +16,7 @@ Having doubts about differences between the original article and my existing alg
 Comparisons with the original article would require the number of floating point operations (flops). I decided to estimate this number through frametime. Since body positions are updated every frame and the amount of interactions calculated is N*N, with each interaction being 20 flops, then total number of flops can be estimated as FPS * 20 * N * N. This is not entirely accurate, as frame generation also includes rendering, integration etc, so amount of flops is underestimated. Still, the interactions calculation is the most computationally expensive part there is, so the number should be accurate enough.
 
 To do tests with different thread numbers and different amount of bodies it would be good to be able to change parameters through the inspector. The previous version of the programme had only the number of bodies N changeable, as well as gravitational constant and max radius from center where the bodies would spawn. This was done through using Serializefields. I have tried implementing the same for thread number, but it turned out that compute shaders do not accept dynamic values, so thread number must be changed internally.
+
+## First commit ever 15.05
+
+Today I finally added the code files to the Git. After attending a project help session I realized I was supposed to be gradually implementing the project and documenting it here, but it is a little bit too late. However, the project still needs some expansion so likely there will be future updates.
