@@ -20,3 +20,7 @@ To do tests with different thread numbers and different amount of bodies it woul
 ## First commit ever 15.05
 
 Today I finally added the code files to the Git. After attending a project help session I realized I was supposed to be gradually implementing the project and documenting it here, but it is a little bit too late. However, the project still needs some expansion so likely there will be future updates.
+
+## Loop unrolling experiments 03.06
+
+Original article mentions loop unrolling improving performance slightly. There was indeed a slight impovement after a single unroll, but subsequent unrolls had a detrimental effect.
