@@ -3,7 +3,7 @@ Shader "Unlit/bodyshader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Color ("Color", Color) = (1,0,0,1)
+        _Color1 ("Color", Color) = (1,0,0,1)
     }
 
     SubShader
@@ -26,10 +26,10 @@ Shader "Unlit/bodyshader"
 
             UNITY_INSTANCING_BUFFER_START(Props)
             UNITY_INSTANCING_BUFFER_END(Props)
-            float4 _Color;
+            float4 _Color1;
 
             StructuredBuffer<float4> _PositionsMass;
-
+            StructuredBuffer<float4> _Colors;
 
             void setup()
             {
@@ -57,7 +57,7 @@ Shader "Unlit/bodyshader"
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
-
+                float4 color : COLOR;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -73,13 +73,15 @@ Shader "Unlit/bodyshader"
 
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.color = _Colors[unity_InstanceID];
+
                 UNITY_TRANSFER_FOG(o, o.vertex);
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
+                fixed4 col = tex2D(_MainTex, i.uv) *i.color;
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
             }
