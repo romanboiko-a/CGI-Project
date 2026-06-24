@@ -24,3 +24,7 @@ Today I finally added the code files to the Git. After attending a project help 
 ## Loop unrolling experiments 03.06
 
 Original article mentions loop unrolling improving performance slightly. There was indeed a slight impovement after a single unroll, but subsequent unrolls had a detrimental effect.
+
+## Adding colours and proper galaxy models 24.06
+
+Today finally created a proper galaxy model acoording to an article, with different densities for different distances from the core. Also added coloring to different bodies, so that a simulation of 2 galaxies passing can be run with 2 galaxies remaining distinct.
