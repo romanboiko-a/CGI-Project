@@ -27,4 +27,9 @@ Original article mentions loop unrolling improving performance slightly. There w
 
 ## Adding colours and proper galaxy models 24.06
 
-Today finally created a proper galaxy model acoording to an article, with different densities for different distances from the core. Also added coloring to different bodies, so that a simulation of 2 galaxies passing can be run with 2 galaxies remaining distinct.
+Today finally created a proper galaxy model acoording to an article, with different densities for different distances from the core. Galaxies now consist of 3 parts: core, disk and halo. For now only added initial speeds for disk. Also added coloring to different bodies, so that a simulation of 2 galaxies passing can be run with 2 galaxies remaining distinct. Used much less AI input this time.
+
+## Initial speed overhaul 25.06
+
+After adding a simplified script for halo body velocities it turned out to be very slow and ineffective. Initial velocities require initial accelerations and previously i tried running a simple double for cycle in the smae controller script. With large n this was extremely slow. A much better way was implemented this time, with compute shader dispatch being done inside Start method. Additionally gravitational potential calculation for halo particles was added as a new kernel. Now the galaxies werre not only moving properly but even unexpectedly started forming arms, which is a great outcome. Running a few tests is all that remains to finish this project.<img width="787" height="476" alt="image" src="https://github.com/user-attachments/assets/9d43b2f4-7826-4d00-8514-46a23d14ad43" />
+
