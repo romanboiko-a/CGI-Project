@@ -19,7 +19,8 @@ To do tests with different thread numbers and different amount of bodies it woul
 
 ## First commit ever 15.05
 
-Today I finally added the code files to the Git. After attending a project help session I realized I was supposed to be gradually implementing the project and documenting it here, but it is a little bit too late. However, the project still needs some expansion so likely there will be future updates.
+Today I finally added the code files to the Git. After attending a project help session I realized I was supposed to be gradually implementing the project and documenting it here, but it is a little bit too late. However, the project still needs some expansion so likely there will be future updates. This is how the simulation looked like at this stage: <img width="974" height="405" alt="image" src="https://github.com/user-attachments/assets/257cecf4-6be3-4ef4-a62b-ac843cf854c6" />
+
 
 ## Loop unrolling experiments 03.06
 
@@ -32,4 +33,8 @@ Today finally created a proper galaxy model acoording to an article, with differ
 ## Initial speed overhaul 25.06
 
 After adding a simplified script for halo body velocities it turned out to be very slow and ineffective. Initial velocities require initial accelerations and previously i tried running a simple double for cycle in the smae controller script. With large n this was extremely slow. A much better way was implemented this time, with compute shader dispatch being done inside Start method. Additionally gravitational potential calculation for halo particles was added as a new kernel. Now the galaxies werre not only moving properly but even unexpectedly started forming arms, which is a great outcome. Running a few tests is all that remains to finish this project.<img width="787" height="476" alt="image" src="https://github.com/user-attachments/assets/9d43b2f4-7826-4d00-8514-46a23d14ad43" />
+
+## Final commit 30.06
+
+As the final update many new additions were made. Variables for simulating galaxy passages were added, like initial speed, orientation and others. Natural coloring for galaxies was added. The ability to change galaxy halo/ disk body count ratio was created as well. 4 different tests were run with different scenarios showing results consistent with the paper the galaxy model is based on. This concludes the project.<img width="974" height="568" alt="image" src="https://github.com/user-attachments/assets/3c93ca19-83ae-4f8a-8010-764c129bb42b" />
 
