@@ -5,16 +5,21 @@
 
 #define tilesize 256
 
+//Buffers passed from controller
 RWStructuredBuffer<float4> PositionsMass;
 RWStructuredBuffer<float4> Velocities;
 RWStructuredBuffer<float4> Accelerations;
 RWStructuredBuffer<float4> Potentials;
+
+//Run variables
 uint BodyCount;
 float DeltaTime;
 float G;
 float EPS;
 
 groupshared float4 shPos[tilesize];
+
+//Acceleration from single body
 float3 BodyBodyInteraction(float4 bi, float4 bj, float3 ai) // 20Flops total
 {
     float3 r = bj.xyz - bi.xyz; // 3Flops
@@ -25,6 +30,7 @@ float3 BodyBodyInteraction(float4 bi, float4 bj, float3 ai) // 20Flops total
     return ai + r * s; // 6Flops
 }
 
+//Potential from single body
 float BodyBodyPotential(float4 bi, float4 bj, float pi) // 10Flops total
 {
     float3 r = bj.xyz - bi.xyz; // 1Flops
@@ -34,67 +40,79 @@ float BodyBodyPotential(float4 bi, float4 bj, float pi) // 10Flops total
 }
 
 
+
+//Acceleration kernel
 [numthreads(tilesize, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    uint index = id.x;
+    uint index = id.x; //Index of the body thread is responsible for, or row index in a NxN matrix
 
-    float4 myPosMass = PositionsMass[index];
+    float4 myPosMass = PositionsMass[index]; //Positionmass of the body thread is responsible for
     float3 acc = float3(0, 0, 0);
-    uint tileCount = (BodyCount + tilesize - 1) / tilesize;
-    uint tid = index % tilesize;
+    uint tileCount = (BodyCount + tilesize - 1) / tilesize; //Amount of tiles in a row
+    uint tid = index % tilesize; //Row index inside the tile, e.g. index=257 would be tid=1 inside tile 1 
 
+
+    //Outer loop going through tiles in a thread block and writing a new shared memory for each tile
     for (uint tile = 0; tile < tileCount; tile++)
     {
-        uint idx = tile * tilesize + tid;
-        shPos[tid] = PositionsMass[idx];
-
-        GroupMemoryBarrierWithGroupSync();
-
+        uint idx = tile * tilesize + tid;//Column index in the NxN matrix for shared memory writing
+        shPos[tid] = PositionsMass[idx];//Writing the body from which the acceleration is calculated into shared memory
+        //All threads will have a different idx, so a shared array of size P is created.
+        
+        //Inner loop going though row of size P inside tile
+        GroupMemoryBarrierWithGroupSync(); //First memory sync
+        
         for (uint i = 0; i < tilesize; i += 2)
         {
             acc = BodyBodyInteraction(myPosMass, shPos[i], acc);
             acc = BodyBodyInteraction(myPosMass, shPos[i + 1], acc);
         }
 
-        GroupMemoryBarrierWithGroupSync();
+        GroupMemoryBarrierWithGroupSync(); //Second memory sync
     }
 
-    Accelerations[index] = float4(acc, 0);
+    Accelerations[index] = float4(acc, 0); //Writing into output buffer
 }
 
+//Integration kernel
 [numthreads(tilesize, 1, 1)]
 void Integrate(uint3 id : SV_DispatchThreadID)
 {
-    uint index = id.x;
+    uint index = id.x; //Index of body thread is responsible for
 
-    float4 posMass = PositionsMass[index];
+    float4 posMass = PositionsMass[index]; //Parameters of given body
     float4 vel = Velocities[index];
     float3 acc = Accelerations[index].xyz;
 
-    vel.xyz += acc * DeltaTime;
+    vel.xyz += acc * DeltaTime; //Integration
     posMass.xyz += vel.xyz * DeltaTime;
 
-    Velocities[index] = vel;
+    Velocities[index] = vel; //Writing output buffers
     PositionsMass[index] = posMass;
 }
 
+//Potential kernel
+//Operates on the same logic as acceleration kernel, but with a different equation
 [numthreads(tilesize, 1, 1)]
 void Potential(uint3 id : SV_DispatchThreadID)
 {
-    uint index = id.x;
+    uint index = id.x; //Index of the body thread is responsible for, or row index in a NxN matrix
 
-    float4 myPosMass = PositionsMass[index];
+    float4 myPosMass = PositionsMass[index]; //Positionmass of the body thread is responsible for
     float pot = 0;
-    uint tileCount = (BodyCount + tilesize - 1) / tilesize;
-    uint tid = index % tilesize;
+    uint tileCount = (BodyCount + tilesize - 1) / tilesize; //Amount of tiles in a row
+    uint tid = index % tilesize;  //Row index inside the tile, e.g. index=257 would be tid=1 inside tile 1
 
+
+    //Outer loop going through tiles in a thread block and writing a new shared memory for each tile
     for (uint tile = 0; tile < tileCount; tile++)
     {
-        uint idx = tile * tilesize + tid;
-        shPos[tid] = PositionsMass[idx];
+        uint idx = tile * tilesize + tid;//Column index for shared memory writing
+        shPos[tid] = PositionsMass[idx];//Writing the body from which the acceleration is calculated into shared memory
+        //All threads will have a different idx, so a shared array of size P is created.
 
-        GroupMemoryBarrierWithGroupSync();
+        GroupMemoryBarrierWithGroupSync(); //First memory sync
 
         for (uint i = 0; i < tilesize; i += 2)
         {
@@ -102,8 +120,8 @@ void Potential(uint3 id : SV_DispatchThreadID)
             pot = BodyBodyPotential(myPosMass, shPos[i + 1], pot);
         }
 
-        GroupMemoryBarrierWithGroupSync();
+        GroupMemoryBarrierWithGroupSync(); //Second memory sync
     }
 
-    Potentials[index] = float4(pot, 0, 0, 0);
+    Potentials[index] = float4(pot, 0, 0, 0); //Writing into output buffer
 }
