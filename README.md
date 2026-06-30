@@ -37,4 +37,6 @@ After adding a simplified script for halo body velocities it turned out to be ve
 ## Final commit 30.06
 
 As the final update many new additions were made. Variables for simulating galaxy passages were added, like initial speed, orientation and others. Natural coloring for galaxies was added. The ability to change galaxy halo/ disk body count ratio was created as well. 4 different tests were run with different scenarios showing results consistent with the paper the galaxy model is based on. This concludes the project.<img width="974" height="568" alt="image" src="https://github.com/user-attachments/assets/3c93ca19-83ae-4f8a-8010-764c129bb42b" />
+<img width="974" height="617" alt="image" src="https://github.com/user-attachments/assets/02b78915-d096-497e-88db-4548ef413918" />
+
 
